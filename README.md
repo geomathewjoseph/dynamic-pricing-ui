@@ -1,6 +1,10 @@
-﻿# Dynamic Pricing Management UI
+# Dynamic Pricing Management UI
 
 An Angular 21 application that takes a complex pricing JSON file and turns it into an interactive, editable dashboard. Each price cell is backed by a WritableSignal, so edits are instant and the entire state auto-saves to localStorage.
+
+**Live Demo:** https://dynamic-pricing-one.vercel.app
+
+**Live Demo:** https://dynamic-pricing-one.vercel.app
 
 ## Screenshots
 
