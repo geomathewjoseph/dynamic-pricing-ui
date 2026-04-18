@@ -1,113 +1,89 @@
-# Dynamic Pricing Management UI
+﻿# Dynamic Pricing Management UI
 
-A production-quality **Angular 21** application for managing dynamic pricing configurations. Built with **signal-based state management**, per-cell reactivity, and a modular component architecture.
+An Angular 21 application that takes a complex pricing JSON file and turns it into an interactive, editable dashboard. Each price cell is backed by a WritableSignal, so edits are instant and the entire state auto-saves to localStorage.
 
----
+## Screenshots
 
-## 📸 Screenshots
-
-### Overview
+### All sections collapsed
 ![Overview](screenshots/01-overview.png)
 
-### FR Section — 2D Size Matrix
+### FR section - size-based pricing matrix (9 sizes x 10 quantity tiers)
 ![FR Section](screenshots/02-fr-section.png)
 
-### Fancy, Hi Vis & Default Sections
+### Fancy, Hi Vis, and Default sections expanded
 ![Fancy Hi Vis Default](screenshots/03-fancy-hivis-default.png)
 
-### Inserts, Reflective & Fancy Inserts
-![Inserts Reflective](screenshots/04-inserts-reflective-fancy-inserts.png)
+### Inserts, Reflective (notice the N/A badge), and Fancy Inserts
+![Inserts Reflective Fancy Inserts](screenshots/04-inserts-reflective-fancy-inserts.png)
 
-### RUI Additional Charges
+### Additional charges - covers fixed price, percentage, tiered, and formula-based types
 ![Additional Charges](screenshots/05-additional-charges.png)
 
-### FR Additional Charges
+### FR-specific additional charges
 ![FR Charges](screenshots/06-fr-additional-charges.png)
 
----
+## How to run
 
-## 🚀 Getting Started
-
-```bash
+```
 npm install
 ng serve
 ```
 
-Navigate to `http://localhost:4200/`.
+Then open http://localhost:4200/.
 
----
+## What it does
 
-## 🏗️ Architecture
+- Parses pricing.json and renders 7 pricing sections (flat rows + a 2D FR matrix)
+- Every value is editable - prices, tiers, discounts, and charge parameters
+- Columns can be added or removed dynamically; row alignment is always maintained
+- Handles sentinel values like dropout, n/a, and quote - these show up as grey read-only badges instead of input fields
+- Saves changes automatically to localStorage with a 300ms debounce
+- Reset to Default wipes localStorage and reloads from the original JSON
+
+## Architecture
 
 ```
-PricingContainerComponent (root)
-├── PricingSectionComponent × N
-│   ├── PricingRowComponent × M
-│   │   └── PricingCellComponent × K
-│   └── Discount field
-├── AdditionalChargesComponent (RUI-level)
-└── AdditionalChargesComponent (FR-level)
+PricingContainerComponent
++-- PricingSectionComponent (x 7 sections)
+|   +-- PricingRowComponent (x rows per section)
+|   |   +-- PricingCellComponent (x columns)
+|   +-- Discount input
++-- AdditionalChargesComponent (13 RUI-level charges)
++-- AdditionalChargesComponent (10 FR-level charges)
 ```
 
-All components are **standalone**.
+Everything is a standalone component. State lives in two services:
 
-### Services
+- **PricingNormalizerService** - pure function that converts raw JSON into the signal-based model. No side effects.
+- **PricingStateService** - holds all the WritableSignals, handles add/remove columns, serialization, and the auto-save effect().
 
-| Service | Responsibility |
-|---------|---------------|
-| `PricingNormalizerService` | Pure JSON → signal model transformation |
-| `PricingStateService` | Signal state, serialization, column management, auto-persistence |
-
----
-
-## 🎯 Key Features
-
-- **Signal-Based Forms** — Every cell is a `WritableSignal<CellValue>`, no FormGroup/ngModel
-- **Sentinel Values** — `dropout`, `n/a`, `quote` rendered as read-only badges
-- **Dynamic Columns** — Add/remove with alignment invariant enforcement
-- **Auto-Save** — Debounced (300ms) localStorage persistence via `effect()`
-- **Immutable Updates** — All signal mutations use spread patterns
-- **7 Pricing Sections** — FR (2D matrix), Default, Fancy, Hi Vis, Inserts, Reflective, Fancy Inserts
-- **23 Additional Charges** — Fixed, percentage, size-tiered, stitch formula, color formula, size-percentage tiers
-
----
-
-## 📁 File Structure
+## File structure
 
 ```
 src/app/
-├── app.ts
-├── app.config.ts
-└── pricing/
-    ├── pricing.types.ts
-    ├── pricing-normalizer.service.ts
-    ├── pricing-state.service.ts
-    ├── pricing-container/
-    ├── pricing-section/
-    ├── pricing-row/
-    ├── pricing-cell/
-    └── additional-charges/
++-- app.ts, app.config.ts
++-- pricing/
+    +-- pricing.types.ts              (interfaces for cells, rows, sections, charges)
+    +-- pricing-normalizer.service.ts (JSON to signal model)
+    +-- pricing-state.service.ts      (state management + persistence)
+    +-- pricing-container/            (root component, loads JSON)
+    +-- pricing-section/              (collapsible section with tier table)
+    +-- pricing-row/                  (label + array of cells)
+    +-- pricing-cell/                 (editable input or sentinel badge)
+    +-- additional-charges/           (renders 6 different charge sub-types)
 ```
 
----
+## Edge cases
 
-## ⚠️ Edge Cases Handled
+- Sentinel values like dropout, n/a, quote are strings mixed into number arrays. Detected during normalization and rendered as non-editable badges.
+- Some price arrays are shorter than item_tier arrays. These get padded with 0 to match.
+- You cant remove the last remaining column (guarded).
+- Corrupted localStorage is caught by try/catch, falls back to the raw JSON.
 
-| Edge Case | Solution |
-|-----------|----------|
-| Sentinel values (dropout, n/a, quote) | Read-only badges |
-| Short price arrays | Padded to match tiers length |
-| Remove last column | Blocked by guard |
-| localStorage corruption | try/catch fallback to raw JSON |
-| FR vs RUI charges | Separate signal arrays |
+## Tech used
 
----
-
-## 🛠️ Technologies
-
-- **Angular 21** — standalone components, zoneless change detection
-- **Signals API** — `signal`, `effect`, `WritableSignal`, `input()`
-- **New control flow** — `@if`, `@for`, `@switch`
-- **TypeScript** with strict typing
-- **CSS** with gradients, transitions, shadows
-- **Google Fonts** (Inter)
+- Angular 21 with standalone components and zoneless change detection
+- Signals API (signal, effect, WritableSignal, input())
+- Built-in control flow (@if, @for, @switch)
+- TypeScript strict mode
+- Vanilla CSS with Inter font from Google Fonts
